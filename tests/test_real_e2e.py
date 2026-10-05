@@ -26,10 +26,10 @@ def test_phoenix_failure_to_golden_and_two_real_custom_judges(tmp_path):
     assert p.phoenix.health()["status"]=="connected"
     with TestClient(create_app(p)) as api:
         assert api.post("/api/agents",json={"path":"sample_agents/langgraph_agent"}).status_code==201
-        normal=api.post("/api/agents/hr-langgraph/execute",json={"input":"What is the leave policy?"}).json()
-        failure=api.post("/api/agents/hr-langgraph/execute",json={"input":"balance error"}).json()
-        timeout=api.post("/api/agents/hr-langgraph/execute",json={"input":"balance timeout"}).json()
-        empty=api.post("/api/agents/hr-langgraph/execute",json={"input":"knowledge missing"}).json()
+        normal=api.post("/api/agents/hr-langgraph/execute",json={"input":"연차 신청 기간과 방법, 필요한 서류를 알려주세요."}).json()
+        failure=api.post("/api/agents/hr-langgraph/execute",json={"input":"연차 조회 오류를 재현해 주세요."}).json()
+        timeout=api.post("/api/agents/hr-langgraph/execute",json={"input":"연차 조회 시간 초과를 재현해 주세요."}).json()
+        empty=api.post("/api/agents/hr-langgraph/execute",json={"input":"미등록 지식 XYZ-404를 찾아주세요."}).json()
         assert normal["status"]=="ok" and failure["status"]=="error" and timeout["status"]=="timeout"
         assert empty["retrieval_attempted"] and not empty["documents"]
         ids={r["span_id"] for r in (normal,failure,timeout,empty)}
@@ -41,7 +41,7 @@ def test_phoenix_failure_to_golden_and_two_real_custom_judges(tmp_path):
         assert candidate["candidate_reason"] and candidate["trace_id"]==failure["trace_id"]
         assert api.patch(f"/api/agents/hr-langgraph/cases/{candidate['id']}",json={"review_status":"approved"}).status_code==422
         # The owner defines desired recovery; unchanged broken tool must fail regression.
-        response=api.patch(f"/api/agents/hr-langgraph/cases/{candidate['id']}",json={"expected":{"expected_status":"ok","required_output":["Available leave"]},"review_status":"approved"})
+        response=api.patch(f"/api/agents/hr-langgraph/cases/{candidate['id']}",json={"expected":{"expected_status":"ok","required_output":["남은 연차"]},"review_status":"approved"})
         assert response.status_code==200,response.text
         excluded=next(c for c in cases if c["span_id"]==failure["span_id"] and c["source"]=="production_trace")
         assert api.patch(f"/api/agents/hr-langgraph/cases/{excluded['id']}",json={"review_status":"excluded"}).status_code==200
@@ -49,8 +49,8 @@ def test_phoenix_failure_to_golden_and_two_real_custom_judges(tmp_path):
         bindings=normal_case["bindings"]
         runner_hash=hashlib.sha256(Path("evaluation_platform/runner/runner.py").read_bytes()).hexdigest()
         judge_results=[]
-        for name,criteria in [("HR required information","The answer must mention applying at least 3 days in advance, the HR portal, and a manager approval document."),
-                              ("HR application channel","The answer must mention the HR portal as the application method.")]:
+        for name,criteria in [("연차 필수정보 포함 평가","답변에 신청 가능 기간(최소 3일 전), 신청 방법(HR 포털), 필요 서류(관리자 승인 문서)가 모두 포함되어야 합니다."),
+                              ("연차 신청 방법 평가","답변에 연차 신청 방법으로 HR 포털이 포함되어야 합니다.")]:
             d=JudgeDefinition(name=name,criteria=criteria,pass_threshold=.8)
             sample=api.post("/api/evaluators/preview",json={"definition":d.model_dump(),"case":normal_case,"answer":normal["output"]})
             assert sample.status_code==200,sample.text
@@ -60,7 +60,7 @@ def test_phoenix_failure_to_golden_and_two_real_custom_judges(tmp_path):
             assert api.post("/api/evaluators",json={"definition":d.model_dump(),"preview_id":sample["id"]}).status_code==201
             bindings.append({"evaluator_id":d.id,"role":"quality"})
         assert api.patch("/api/agents/hr-langgraph/cases/definition_hr-policy",json={"bindings":bindings,"review_status":"approved"}).status_code==200
-        manual=api.post("/api/agents/hr-langgraph/cases",json={"input":"Hello","expected":{"reference_output":"I can help with leave policy and leave balance."}}).json()
+        manual=api.post("/api/agents/hr-langgraph/cases",json={"input":"안녕하세요","expected":{"reference_output":"연차 규정 안내와 남은 연차 조회를 도와드릴 수 있습니다."}}).json()
         assert api.patch(f"/api/agents/hr-langgraph/cases/{manual['id']}",json={"review_status":"approved"}).status_code==200
         golden=api.post("/api/agents/hr-langgraph/golden",json={}).json()
         assert any(c["trace_id"]==failure["trace_id"] for c in golden["cases"])
@@ -88,10 +88,10 @@ def test_phoenix_failure_to_golden_and_two_real_custom_judges(tmp_path):
 
 def test_real_judge_positive_and_negative_rubric(tmp_path):
     p=Platform(tmp_path)
-    d=JudgeDefinition(name="Portal rubric",criteria="The answer must mention the HR portal.",pass_threshold=.8)
-    case={"input":"How do I apply?","source":"owner_manual"}
-    yes=p.preview_judge(d.model_dump(),case,"Use the HR portal.")["result"]
-    no=p.preview_judge(d.model_dump(),case,"I do not know.")["result"]
+    d=JudgeDefinition(name="HR 포털 안내 평가",criteria="답변에 HR 포털이 포함되어야 합니다.",pass_threshold=.8)
+    case={"input":"연차를 어떻게 신청하나요?","source":"owner_manual"}
+    yes=p.preview_judge(d.model_dump(),case,"HR 포털을 이용하세요.")["result"]
+    no=p.preview_judge(d.model_dump(),case,"잘 모르겠습니다.")["result"]
     assert yes["passed"] and not no["passed"]
     assert yes["score"]>no["score"]
     p.phoenix.close()

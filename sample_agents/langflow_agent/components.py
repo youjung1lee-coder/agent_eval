@@ -13,7 +13,7 @@ class SupportRouter(Component):
 
     def routed(self, requested: str) -> Data:
         question = self.question.lower()
-        route = "tool" if "ticket" in question else "rag" if "password" in question or "knowledge" in question else "general"
+        route = "tool" if any(t in question for t in ("ticket", "티켓")) else "rag" if any(t in question for t in ("password", "knowledge", "비밀번호", "지식")) else "general"
         for other in ("rag", "tool", "general"):
             if other != route:
                 self.stop(other)
@@ -42,7 +42,7 @@ class SupportSearch(Component):
         state = dict(self.state.data)
         documents = ctx.retrieve(state["input"])
         state.update(documents=documents, retrieval_attempted=True,
-                     output=documents[0]["content"] if documents else "No support document found.",
+                     output=documents[0]["content"] if documents else "지원 문서를 찾지 못했습니다. 확인된 문서를 기준으로 질문해 주세요.",
                      workflow_path=state["workflow_path"] + ["Search"], branches=["Router->Search"])
         return Data(data=state)
 
@@ -58,14 +58,14 @@ class SupportService(Component):
         ctx = active_context.get()
         state = dict(self.state.data)
         args = {"ticket_id": "T-100"}
-        if "error" in state["input"]:
+        if "error" in state["input"] or "오류" in state["input"]:
             args["simulate_error"] = True
         try:
             result = ctx.tool("ticket_status", args)
             state.update(tool_calls=[{"name": "ticket_status", "args": args, "result": result, "status": "ok"}],
-                         output="Ticket status: " + result["state"])
+                         output="지원 티켓 처리 상태: " + result["state"])
         except Exception as exc:
-            state.update(status="error", error=str(exc), output="Ticket service unavailable.",
+            state.update(status="error", error=str(exc), output="현재 지원 티켓 조회 서비스를 이용할 수 없습니다.",
                          tool_calls=[{"name": "ticket_status", "args": args, "status": "error", "error": str(exc)}])
         state.update(workflow_path=state["workflow_path"] + ["Service"], branches=["Router->Service"])
         return Data(data=state)
@@ -79,7 +79,7 @@ class SupportGeneral(Component):
 
     def help(self) -> Data:
         state = dict(self.state.data)
-        state.update(output="I can help with password reset and support tickets.",
+        state.update(output="비밀번호 재설정과 지원 티켓 조회를 도와드릴 수 있습니다.",
                      workflow_path=state["workflow_path"] + ["Help"], branches=["Router->Help"])
         return Data(data=state)
 

@@ -100,9 +100,9 @@ Phoenix Native Dataset/Experiment API에 의존하지 않고 Golden과 Registry�
 
 ## Failure Candidate
 
-1. `balance error`, `balance timeout`, `knowledge missing`을 운영 Query로 실행합니다.
+1. `연차 조회 오류를 재현해 주세요.`, `연차 조회 시간 초과를 재현해 주세요.`, `미등록 지식 XYZ-404를 찾아주세요.`를 운영 질문으로 실행합니다.
 2. `prd`의 실제 Trace가 수집된 후 Candidate를 생성합니다.
-3. `Failure Candidate` Filter에서 `trace_id`, `span_id`, `failure_type`, `original_input/output`, `error`, `latency`, `candidate_reason`을 확인합니다.
+3. `실패 후보` 필터에서 `trace_id`, `span_id`, `failure_type`, `original_input/output`, `error`, `latency`, `candidate_reason`을 확인합니다.
 4. Owner가 기대하는 복구 동작을 Contract로 작성하고 승인 또는 제외합니다.
 5. Golden에 포함하고 Regression을 실행합니다. 고장난 Tool이 계속 실패하면 Gate가 실패하고 HOLD가 됩니다.
 
@@ -120,7 +120,7 @@ Gate와 Quality를 분리합니다. Overall Score는 Quality만 평균합니다.
 
 ## Custom Evaluator
 
-UI의 `＋ Custom Evaluator`에서 이름, 설명, Criteria, Score Scale, Pass Threshold, 적용 Scope/Target, Active를 설정합니다. Sample Question/Answer로 **실제 LLM 평가**를 실행하고 Score/Pass/Fail/Reason을 확인한 다음 등록합니다. Sample 이후 정의가 바뀌면 재평가해야 합니다. 기존 정의를 수정하면 Version을 증가시켜 다시 Sample을 실행합니다. Inactive Judge는 새 Golden의 Binding에 연결할 수 없습니다. 이미 확정한 Golden은 이전 정의를 재현하기 위해 스냅샷을 유지합니다.
+UI의 `＋ 사용자 정의 Evaluator`에서 이름, 설명, 평가 기준, 점수 범위, 통과 기준, 적용 범위/대상, 활성 상태를 설정합니다. 한국어 Sample 질문/응답으로 **실제 LLM 평가**를 실행하고 점수·통과 여부·이유를 확인한 다음 등록합니다. Sample 이후 정의가 바뀌면 재평가해야 합니다. 기존 정의를 수정하면 Version을 증가시켜 다시 Sample을 실행합니다. Inactive Judge는 새 Golden의 Binding에 연결할 수 없습니다. 이미 확정한 Golden은 이전 정의를 재현하기 위해 스냅샷을 유지합니다.
 
 Case Review에서 Platform Evaluator, 기존 Custom Evaluator 또는 새 Custom Evaluator를 선택합니다. Dataset Binding JSON은 전체, Type, Capability Scope를 지원합니다. 하나의 Case에 여러 Evaluator를 연결할 수 있습니다.
 
@@ -128,9 +128,19 @@ Case Review에서 Platform Evaluator, 기존 Custom Evaluator 또는 새 Custom 
 
 ## UI
 
-1. **Generate & Coverage:** Repository 등록, 발견한 Node/Branch/Tool/Knowledge, Source 수, 운영 Query 실행, Failure 유형, Candidate/Approved Coverage Gap.
-2. **Owner Review:** Source/Status/Search Filter, 질문·Expected Output·Contract·Evaluator 편집, Evidence/Confidence/Trace/Reason, 추가·삭제·승인·제외, Golden Version 확정.
-3. **Evaluation Results:** Golden Version·평가 종류 선택, Quality Score와 Gate/HOLD, Case별 Expected vs Actual, Workflow/Tool/RAG/Latency, Platform/Custom Score·Reason, 실패 Filter와 Run History.
+1. **데이터셋 생성 · Coverage:** Repository 등록, 발견한 Node/Branch/Tool/Knowledge, 출처별 후보 수, 운영 질문 실행, 실패 유형, 전체/승인 후보 Coverage Gap.
+2. **Owner 검토:** 출처/검토 상태/검색 필터, 한국어 질문·기대 응답·Contract·Evaluator 편집, 생성 근거·Trace·추천 이유, 추가·삭제·승인·제외, Golden Version 확정.
+3. **평가 결과:** Golden Version·평가 종류 선택, Quality Score와 Gate/HOLD, 사례별 기대/실제 응답, Workflow/Tool/RAG/Latency, Platform/Custom 점수·이유, 실패 필터와 실행 이력.
+
+Sample Agent `1.1-ko`의 질문·문서·기대 응답과 후보 설명은 한국어입니다. UI는 한국어를 기본으로 하되 AgentSpec, Golden Dataset, Evaluator, Trace ID, Gate, Quality, PASS/FAIL/HOLD 등 기술 용어와 API/Schema 식별자는 유지합니다. Judge에는 한국어 이유를 요청하지만 외부 모델의 언어·정확성은 모델 특성에 따라 달라질 수 있습니다.
+
+기존 영문 데모를 사용했다면 **seed_demo 재실행 / Agent 재등록 전에** 다음 명령으로 변환합니다. SQLite 백업을 생성하고 이전 Golden/실행 이력 및 원본 Trace 입력·응답은 보존합니다. 알려진 Sample 후보의 질문·기대 응답만 변환하며, 운영 후보를 새로 자동 승인하지 않습니다. `--approve-sample-contracts`는 명시된 Sample Workflow/RAG 계약만 승인하고 `--finalize`는 새 Golden 버전을 만듭니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.localize_demo --approve-sample-contracts --finalize
+```
+
+이미 Agent를 재등록했다면 `--source-backup data/platform-before-ko-<timestamp>.sqlite`로 변환 이전 AgentSpec이 있는 백업을 지정할 수 있습니다. 새 Clone에서는 변환 없이 Quick Start를 실행하면 한국어 후보가 생성됩니다. [한국어 적용 검증](docs/korean_localization.md).
 
 Golden에는 Case, Binding, Custom Evaluator 정의, Agent Fingerprint를 저장합니다. 결과에는 현재 Agent Snapshot/Fingerprint, Dataset Version, Evaluator Version/정의, Judge 모델 SHA256과 실제 응답을 남깁니다. SQLite 파일을 보관하면 재시작 후에도 조회할 수 있습니다.
 

@@ -1,6 +1,6 @@
 {
   "agent_id": "support-langflow",
-  "version": "1.0",
+  "version": "1.1-ko",
   "framework": "langflow",
   "entry_point": "flow.json",
   "workflow_id": "support-flow",
@@ -48,24 +48,24 @@
         }
       },
       "mock_result": {
-        "state": "assigned"
+        "state": "담당자 배정 완료"
       }
     }
   ],
   "knowledge": [
     {
       "id": "password-reset",
-      "content": "Reset your password using the account portal. Verify your email and choose a password with at least 12 characters.",
-      "question": "How can I reset my password?",
-      "reference_answer": "Reset your password using the account portal. Verify your email and choose a password with at least 12 characters."
+      "content": "계정 포털에서 비밀번호를 재설정하세요. 이메일 인증 후 12자 이상의 비밀번호를 설정해야 합니다.",
+      "question": "비밀번호 재설정 방법과 비밀번호 조건을 알려주세요.",
+      "reference_answer": "계정 포털에서 비밀번호를 재설정하세요. 이메일 인증 후 12자 이상의 비밀번호를 설정해야 합니다."
     }
   ],
   "probes": [
     {
       "id": "support-password",
-      "input": "How can I reset my password?",
+      "input": "비밀번호 재설정 방법과 비밀번호 조건을 알려주세요.",
       "capability": "knowledge",
-      "evidence": "Exported Router rag output connected to Search; password-reset document",
+      "evidence": "Flow JSON의 Router→Search 연결과 password-reset 문서를 근거로 합니다.",
       "targets": {
         "feature": [
           "knowledge"
@@ -95,9 +95,9 @@
     },
     {
       "id": "support-ticket",
-      "input": "Check my ticket",
+      "input": "지원 티켓 처리 상태를 조회해 주세요.",
       "capability": "ticket",
-      "evidence": "Exported Router tool output connected to Service; ticket_status schema",
+      "evidence": "Flow JSON의 Router→Service 연결과 ticket_status Schema를 검증합니다.",
       "targets": {
         "feature": [
           "ticket"
@@ -137,9 +137,9 @@
     },
     {
       "id": "support-help",
-      "input": "Hello",
+      "input": "안녕하세요",
       "capability": "general",
-      "evidence": "Router general output connected to Help",
+      "evidence": "일반 질문에 대한 Router→Help 연결을 검증합니다.",
       "targets": {
         "feature": [
           "general"
@@ -155,7 +155,7 @@
         ]
       },
       "expected": {
-        "reference_output": "I can help with password reset and support tickets.",
+        "reference_output": "비밀번호 재설정과 지원 티켓 조회를 도와드릴 수 있습니다.",
         "required_nodes": [
           "Help"
         ]
@@ -163,9 +163,9 @@
     },
     {
       "id": "support-error",
-      "input": "ticket error",
+      "input": "지원 티켓 조회 오류를 재현해 주세요.",
       "capability": "failure",
-      "evidence": "Mock support tool exception",
+      "evidence": "지원 티켓 Mock Tool의 예외 처리와 오류 안내를 검증합니다.",
       "targets": {
         "feature": [
           "failure"
@@ -177,15 +177,15 @@
       "expected": {
         "expected_status": "error",
         "required_output": [
-          "unavailable"
+          "이용할 수 없습니다"
         ]
       }
     },
     {
       "id": "support-missing",
-      "input": "knowledge missing",
+      "input": "미등록 지식 XYZ-404를 찾아주세요.",
       "capability": "failure",
-      "evidence": "No knowledge match; support abstention contract",
+      "evidence": "지원 문서 검색 결과가 없을 때의 응답 계약을 검증합니다.",
       "targets": {
         "feature": [
           "failure"
@@ -199,7 +199,7 @@
       },
       "expected": {
         "required_output": [
-          "No support document"
+          "지원 문서를 찾지 못했습니다"
         ]
       }
     }

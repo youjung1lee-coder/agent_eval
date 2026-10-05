@@ -37,13 +37,13 @@ def generate(spec, production):
             input=probe.input, expected=probe.expected, source="workflow", evidence=[probe.evidence],
             confidence=probe.confidence, capability=probe.capability, evaluation_areas=[probe.capability],
             targets=probe.targets, bindings=recommend(probe.expected),
-            candidate_reason="Owner-supplied integration probe mapped to discovered definition; not inferred business truth"))
+            candidate_reason="Owner가 제공한 평가 계약을 발견된 Agent 구성에 매핑했습니다. 업무 정답을 임의로 추론하지 않았습니다."))
     for doc in spec.knowledge_sources:
         if not doc.question or doc.reference_answer is None:
             continue
         expected = ExpectedContract(reference_output=doc.reference_answer, reference_context=[doc.content], document_ids=[doc.id])
         cases.append(EvaluationCase(id="knowledge_" + doc.id, scenario_id=scenario(doc.question),
-            input=doc.question, expected=expected, source="rag", evidence=[f"knowledge unit {doc.id} from {doc.source}"],
+            input=doc.question, expected=expected, source="rag", evidence=[f"지식 문서 {doc.id} · 출처: {doc.source}"],
             capability="rag", evaluation_areas=["rag"], targets={"rag": [doc.id]}, bindings=recommend(expected)))
     for trace in production:
         result = AgentResult.model_validate(trace["result"])
@@ -54,7 +54,7 @@ def generate(spec, production):
                     "tool": [t["name"] for t in result.tool_calls], "rag": [d["id"] for d in result.documents]}
         cases.append(EvaluationCase(id="trace_" + str(result.span_id), scenario_id=sid, input=trace["input"],
             source="production_trace", confidence=0.3, evidence=[trace["evidence"]], targets=observed,
-            candidate_reason="Observed production input. Owner must supply expected contract; output is NOT ground truth", **lineage))
+            candidate_reason="실제 운영 질문에서 생성했습니다. Owner가 기대 응답과 평가 계약을 작성해야 하며, 운영 응답을 정답으로 간주하지 않습니다.", **lineage))
         for kind, reason in detect(result, span_status=trace.get("status_code")):
             cases.append(EvaluationCase(id="failure_" + str(result.span_id) + "_" + kind, scenario_id=sid,
                 input=trace["input"], source="phoenix_failure_candidate", failure_type=kind, confidence=0.3,

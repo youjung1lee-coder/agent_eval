@@ -1,6 +1,6 @@
 # 최종 구현 보고
 
-검증 날짜: 2026-10-05, Asia/Seoul. 상세 실행 증거는 [validation.md](validation.md), 실행 절차는 [README](../README.md)를 참고합니다.
+검증 날짜: 2026-10-05, Asia/Seoul. 아래는 초기 1.0 구현의 검증 결과입니다. 이후 **1.1-ko 한국어 데이터셋/UI 적용 및 36개 테스트 통과** 결과는 [한국어 적용 검증](korean_localization.md)을 참고합니다. 초기 실행 증거는 [validation.md](validation.md), 실행 절차는 [README](../README.md)를 참고합니다.
 
 1. **완료 기능:** Repository 등록, 실제 Framework Adapter, AgentSpec, 분석/5개 Source 후보, 관찰 기반 실패 탐지, Inventory Coverage, 리뷰 CRUD/승인/제외, Golden Version, Registry, 기본/Custom LLM 평가, Runner, SQLite 결과, 3단계 UI, CLI/API.
 2. **Architecture:** Repository → Adapter → AgentSpec → Analyzer → Generator → Coverage → Owner Review → Golden → Registry/Runner → Store/UI. 운영 Phoenix `prd`와 평가 `evaluate`를 분리합니다.

@@ -16,6 +16,6 @@ def coverage(spec, cases, production, observed_failures=None):
         rows.append({"dimension": dimension, "covered": len(hit), "total": len(known) if known else None,
                      "unknown": unknown, "percent": round(100 * len(hit) / len(known), 1) if known else None,
                      "missing": sorted(known - hit), "covered_ids": sorted(hit),
-                     "basis": "observed Phoenix query window; future usage unknown" if dimension == "production" else "declared/discovered AgentSpec inventory",
-                     "meaning": "candidate/review design coverage, not proof of successful execution"})
+                     "basis": "Phoenix 운영 질문 관찰 범위 · 미래 사용 범위 unknown" if dimension == "production" else "AgentSpec에 선언되거나 발견된 대상 항목",
+                     "meaning": "후보 / 승인된 평가 설계의 커버 범위이며, 실행 성공을 의미하지 않습니다."})
     return rows

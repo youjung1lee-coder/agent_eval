@@ -145,7 +145,7 @@ class Platform:
 
     def add_case(self, agent_id, data):
         case = EvaluationCase.model_validate({**data, "source": "owner_manual", "sources": ["owner_manual"],
-                  "evidence": ["Explicit local owner input"], "review_status": "pending"})
+                  "evidence": ["로컬 Owner가 직접 작성한 평가 사례"], "review_status": "pending"})
         case.scenario_id = scenario(case.input)
         if not case.bindings:
             case.bindings = recommend(case.expected)

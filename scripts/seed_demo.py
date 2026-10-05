@@ -5,9 +5,9 @@ from evaluation_platform.service import Platform
 
 def main():
     p=Platform()
-    samples=[("sample_agents/langgraph_agent",["What is the leave policy?","Show my balance","balance error","balance timeout","knowledge missing"]),
-             ("sample_agents/langflow_agent",["How can I reset my password?","Check my ticket","ticket error"]),
-             ("sample_agents/third_test_agent",["Track my order","When are returns accepted?","Track a private order"])]
+    samples=[("sample_agents/langgraph_agent",["연차 신청 기간과 방법, 필요한 서류를 알려주세요.","남은 연차를 조회해 주세요.","연차 조회 오류를 재현해 주세요.","연차 조회 시간 초과를 재현해 주세요.","미등록 지식 XYZ-404를 찾아주세요."]),
+             ("sample_agents/langflow_agent",["비밀번호 재설정 방법과 비밀번호 조건을 알려주세요.","지원 티켓 처리 상태를 조회해 주세요.","지원 티켓 조회 오류를 재현해 주세요."]),
+             ("sample_agents/third_test_agent",["내 주문의 배송 상태를 조회해 주세요.","반품 가능 기간과 필요한 서류, 반품 제외 품목을 알려주세요.","다른 사람의 비공개 주문 배송 상태를 조회해 주세요."])]
     for path,queries in samples:
         record=p.register(path)
         agent_id=record["spec"]["agent_id"]

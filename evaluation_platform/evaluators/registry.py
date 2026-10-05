@@ -37,14 +37,14 @@ def tool_match(e, r):
         ok = ok and len(actual) == len(expected) and all(
             a["name"] == x["name"] and all(a.get("args", {}).get(k) == v for k, v in x.get("args", {}).items())
             for a, x in zip(actual, expected))
-    return verdict(ok, "Tool names, arguments, order and forbidden calls compared", {"expected": expected, "actual": actual})
+    return verdict(ok, "Tool 이름·인수·호출 순서와 금지된 호출을 비교했습니다.", {"expected": expected, "actual": actual})
 
 
 def path_match(e, r):
     ok = set(e.required_nodes) <= set(r.workflow_path) and not set(e.forbidden_nodes) & set(r.workflow_path)
     if e.valid_paths:
         ok = ok and r.workflow_path in e.valid_paths
-    return verdict(ok, "Required/forbidden nodes and ordered valid paths compared", {"actual_path": r.workflow_path})
+    return verdict(ok, "필수·금지 Node와 허용된 실행 경로의 순서를 비교했습니다.", {"actual_path": r.workflow_path})
 
 
 def rag_recall(e, r):
@@ -52,7 +52,7 @@ def rag_recall(e, r):
         raise ValueError("RAG retrieval requires reference document IDs")
     retrieved = {d["id"] for d in r.documents[:e.recall_k]}
     score = len(set(e.document_ids) & retrieved) / len(set(e.document_ids))
-    return score, f"Reference document Recall@{e.recall_k}={score:.3f}", {"reference": e.document_ids, "retrieved": sorted(retrieved)}
+    return score, f"기준 문서 Recall@{e.recall_k}={score:.3f}", {"reference": e.document_ids, "retrieved": sorted(retrieved)}
 
 
 def schema_match(e, r):
@@ -61,7 +61,7 @@ def schema_match(e, r):
         raise ValueError("Output schema contract missing")
     try:
         jsonschema.validate(json.loads(r.output), e.output_schema)
-        return verdict(True, "Output satisfies JSON Schema")
+        return verdict(True, "응답이 출력 JSON Schema를 충족합니다.")
     except (ValueError, jsonschema.ValidationError) as exc:
         return verdict(False, str(exc))
 
@@ -78,22 +78,22 @@ def runtime_match(e, r):
             value = call.get("result", {})
             for part in field.split("."):
                 value = value[part]
-            return verdict(str(value) in r.output, f"Runtime reference {e.runtime_reference} = {value}")
-    return verdict(False, "Runtime reference tool not called")
+            return verdict(str(value) in r.output, f"Runtime 참조 {e.runtime_reference} = {value}")
+    return verdict(False, "참조 대상 Tool이 호출되지 않았습니다.")
 
 
 def platform_registry(definitions=(), backend=None):
     registry = EvaluatorRegistry()
     backend = backend or JudgeBackend()
     fns = {
-        "exact": lambda e, r: verdict(e.reference_output is not None and e.reference_output.strip() == r.output.strip(), "Exact trimmed string comparison"),
+        "exact": lambda e, r: verdict(e.reference_output is not None and e.reference_output.strip() == r.output.strip(), "앞뒤 공백을 제외한 문자열 일치를 비교했습니다."),
         "tool_call": tool_match,
         "workflow_path": path_match,
         "rag_retrieval": rag_recall,
-        "latency": lambda e, r: verdict(r.latency_ms <= e.max_latency_ms, f"{r.latency_ms:.1f}ms / budget {e.max_latency_ms}ms"),
-        "error_detection": lambda e, r: verdict(r.status == e.expected_status, f"Expected status {e.expected_status}; actual {r.status}; error {r.error}"),
-        "behavior": lambda e, r: verdict(all(x.casefold() in r.output.casefold() for x in e.required_output) and not any(x.casefold() in r.output.casefold() for x in e.forbidden_output), "Required and forbidden output checked"),
-        "permission": lambda e, r: verdict(r.permission_denied == e.permission_denied and not any(t["name"] in e.forbidden_tools for t in r.tool_calls), "Observed permission decision and forbidden tools compared"),
+        "latency": lambda e, r: verdict(r.latency_ms <= e.max_latency_ms, f"응답 시간 {r.latency_ms:.1f}ms / 기준 {e.max_latency_ms}ms"),
+        "error_detection": lambda e, r: verdict(r.status == e.expected_status, f"기대 상태: {e.expected_status} · 실제 상태: {r.status} · 오류: {r.error or '없음'}"),
+        "behavior": lambda e, r: verdict(all(x.casefold() in r.output.casefold() for x in e.required_output) and not any(x.casefold() in r.output.casefold() for x in e.forbidden_output), "필수·금지 응답 문구를 확인했습니다."),
+        "permission": lambda e, r: verdict(r.permission_denied == e.permission_denied and not any(t["name"] in e.forbidden_tools for t in r.tool_calls), "관찰된 접근 권한 판정과 금지된 Tool을 비교했습니다."),
         "output_schema": schema_match,
         "runtime_reference": runtime_match,
     }

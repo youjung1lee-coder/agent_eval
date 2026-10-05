@@ -77,7 +77,7 @@ class PhoenixConnector:
             result.span_id = context.get("span_id") or span.get("span_id")
             records.append({"input": attr("input.value", ""), "result": result.model_dump(),
                             "status_code": span.get("status_code"), "events": span.get("events", []),
-                            "evidence": f"Phoenix prd span {result.span_id}; status={span.get('status_code')}"})
+                            "evidence": f"Phoenix prd Span {result.span_id} · 상태: {span.get('status_code')}"})
         return records
 
     def close(self):

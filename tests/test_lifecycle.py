@@ -21,7 +21,7 @@ def test_review_snapshots_and_crud(platform):
     platform.save_case("hr-langgraph",case.id,{"input":"changed"})
     assert platform.candidates("hr-langgraph")[0].review_status == "pending"
     assert platform.store.get("golden",first["id"])["cases"][0]["input"] == case.input
-    manual=platform.add_case("hr-langgraph",{"input":"Hello", "expected":{"reference_output":"I can help with leave policy and leave balance."}})
+    manual=platform.add_case("hr-langgraph",{"input":"안녕하세요", "expected":{"reference_output":"연차 규정 안내와 남은 연차 조회를 도와드릴 수 있습니다."}})
     platform.save_case("hr-langgraph",manual["id"],{"review_status":"excluded"})
     platform.generate("hr-langgraph")
     assert next(c for c in platform.candidates("hr-langgraph") if c.id==manual["id"]).review_status=="excluded"
