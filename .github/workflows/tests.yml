@@ -21,6 +21,9 @@ jobs:
           python-version: '3.12'
       - run: |
           python -m pip install --no-cache-dir -r requirements.txt
+          # The upstream 0.3.18 Linux CPU wheel links musl; Ubuntu needs a native build.
+          CMAKE_ARGS="-DGGML_NATIVE=OFF" CMAKE_BUILD_PARALLEL_LEVEL=2 python -m pip install --force-reinstall --no-cache-dir --no-deps --no-binary=llama-cpp-python --index-url https://pypi.org/simple llama-cpp-python==0.3.18
+          python -c "from llama_cpp import Llama; print('Native judge runtime loaded')"
           python -m venv .phoenix-venv
           .phoenix-venv/bin/python -m pip install --no-cache-dir -r requirements-phoenix.txt
           python -m scripts.download_judge

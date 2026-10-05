@@ -63,6 +63,13 @@ $env:PYTHONUTF8='1'
 
 Linux/macOS에서는 `python3 -m venv`와 `.venv/bin/python`, `.phoenix-venv/bin/python`으로 경로를 바꿉니다. 서버는 Loopback에만 바인딩합니다. Remote Repository와 Flow의 Custom Component는 신뢰한 코드만 등록합니다. PoC에는 사내 인증과 Python Sandbox가 없습니다.
 
+Ubuntu/glibc에서는 0.3.18 CPU 휠의 musl 의존성을 피하기 위해 requirements 설치 후 아래 명령으로 같은 버전을 소스 빌드합니다. C/C++ Compiler와 CMake가 필요하며 CI도 이 방식으로 검증합니다. [공식 소스 설치 설명](https://github.com/abetlen/llama-cpp-python#installation).
+
+```bash
+CMAKE_ARGS="-DGGML_NATIVE=OFF" CMAKE_BUILD_PARALLEL_LEVEL=2 .venv/bin/python -m pip install --force-reinstall --no-cache-dir --no-deps --no-binary=llama-cpp-python --index-url https://pypi.org/simple llama-cpp-python==0.3.18
+.venv/bin/python -c "from llama_cpp import Llama; print('Judge runtime loaded')"
+```
+
 ## Sample Agents
 
 | Agent | 실제 실행 엔진 | 구조 |

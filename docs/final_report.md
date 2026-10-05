@@ -23,7 +23,7 @@
 19. **Mock/제외:** 사내 인증/MyAccess, 기업 인프라/저장소/검색/Business Tool/A2A/Jenkins, 분산 Runner·Sandbox·강제 Timeout·멀티턴, Semantic Clustering은 미구현 또는 Mock/Interface. Sample 최종 응답은 결정적 Mock이지만 LLM Judge와 Framework/Phoenix는 실제입니다.
 20. **GitHub Branch:** `feat/gaia-evaluation-platform`. 빈 원격 저장소에는 원본 요구사항 문서만 초기 `main`으로 만들었고 구현은 작업 브랜치에 배포했습니다.
 21. **주요 Commit:** 기준 문서 `ded4433`; 구현 `971f938` (`feat: implement reusable GAIA evaluation lifecycle with real framework and Phoenix integrations`). 테스트/문서 Commit은 같은 작업 브랜치 History에서 확인합니다.
-22. **Pull Request:** 작업 브랜치 → `main` PR로 제공합니다. 자동 Merge/실제 회사 배포는 수행하지 않습니다.
+22. **Pull Request:** [PR #1](https://github.com/youjung1lee-coder/agent_eval/pull/1), 작업 브랜치 → `main`. 자동 Merge/실제 회사 배포는 수행하지 않습니다.
 23. **실행:** README의 Clone→두 venv Install→공개 모델 Download→Phoenix 시작→seed_demo→Platform serve. 로컬 UI `http://127.0.0.1:8000`, Phoenix `http://127.0.0.1:6006`. 최종 Python Suite **35 passed, 0 failed, 0 skipped**, Browser E2E PASS/JS Error 0, Secret Scan PASS.
 
 ## 내일 실제 GAIA Boilerplate와 Agent Repository를 제공하면?
