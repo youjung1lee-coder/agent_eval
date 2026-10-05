@@ -1,0 +1,157 @@
+{
+  "agent_id": "commerce-third",
+  "version": "1.1-ko",
+  "framework": "langgraph",
+  "entry_point": "workflow.py:build_graph",
+  "workflow_id": "order-operations",
+  "capabilities": [
+    "shipment",
+    "returns",
+    "permission"
+  ],
+  "rag_sources": [
+    "merchant-policies"
+  ],
+  "edge_cases": [
+    "unauthorized_order"
+  ],
+  "failure_types": [],
+  "tools": [
+    {
+      "name": "shipment_tracking",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "order_id"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string"
+          }
+        }
+      },
+      "mock_result": {
+        "state": "배송 중",
+        "arrival": "금요일"
+      }
+    }
+  ],
+  "knowledge": [
+    {
+      "id": "merchant-return-30",
+      "content": "반품은 구매 영수증을 지참하면 30일 이내에 가능합니다. 개봉한 신선식품은 반품 대상에서 제외됩니다.",
+      "question": "반품 가능 기간과 필요한 서류, 반품 제외 품목을 알려주세요.",
+      "reference_answer": "반품은 구매 영수증을 지참하면 30일 이내에 가능합니다. 개봉한 신선식품은 반품 대상에서 제외됩니다."
+    }
+  ],
+  "probes": [
+    {
+      "id": "order-shipment",
+      "input": "내 주문의 배송 상태를 조회해 주세요.",
+      "capability": "shipment",
+      "evidence": "주문 ORDER-42의 배송 조회에 대한 Owner 업무 계약을 검증합니다.",
+      "targets": {
+        "feature": [
+          "shipment"
+        ],
+        "workflow": [
+          "order_intake",
+          "dispatch",
+          "shipment",
+          "receipt"
+        ],
+        "branch": [
+          "dispatch->shipment"
+        ],
+        "tool": [
+          "shipment_tracking"
+        ]
+      },
+      "expected": {
+        "tool_calls": [
+          {
+            "name": "shipment_tracking",
+            "args": {
+              "order_id": "ORDER-42"
+            }
+          }
+        ],
+        "valid_paths": [
+          [
+            "order_intake",
+            "dispatch",
+            "shipment",
+            "receipt"
+          ]
+        ],
+        "runtime_reference": "tool_output.shipment_tracking.state"
+      }
+    },
+    {
+      "id": "order-return",
+      "input": "반품 가능 기간과 필요한 서류, 반품 제외 품목을 알려주세요.",
+      "capability": "returns",
+      "evidence": "반품 정책 문서와 returns 분기를 근거로 합니다.",
+      "targets": {
+        "feature": [
+          "returns"
+        ],
+        "workflow": [
+          "order_intake",
+          "dispatch",
+          "returns",
+          "receipt"
+        ],
+        "branch": [
+          "dispatch->returns"
+        ],
+        "rag": [
+          "merchant-return-30"
+        ]
+      },
+      "expected": {
+        "required_nodes": [
+          "returns"
+        ],
+        "document_ids": [
+          "merchant-return-30"
+        ]
+      }
+    },
+    {
+      "id": "order-private",
+      "input": "다른 사람의 비공개 주문 배송 상태를 조회해 주세요.",
+      "capability": "permission",
+      "evidence": "Mock 소유권 검사에서 다른 사람의 주문은 Tool 호출 전에 접근을 차단해야 합니다.",
+      "targets": {
+        "feature": [
+          "permission"
+        ],
+        "workflow": [
+          "order_intake",
+          "dispatch",
+          "blocked",
+          "receipt"
+        ],
+        "branch": [
+          "dispatch->blocked"
+        ],
+        "edge": [
+          "unauthorized_order"
+        ]
+      },
+      "expected": {
+        "permission_denied": true,
+        "forbidden_tools": [
+          "shipment_tracking"
+        ],
+        "required_nodes": [
+          "blocked"
+        ],
+        "required_output": [
+          "접근이 거부되었습니다"
+        ]
+      }
+    }
+  ]
+}

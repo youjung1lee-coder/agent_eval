@@ -1,0 +1,222 @@
+{
+  "agent_id": "hr-langgraph",
+  "version": "1.1-ko",
+  "framework": "langgraph",
+  "entry_point": "workflow.py:build_graph",
+  "workflow_id": "hr-assistance",
+  "capabilities": [
+    "knowledge",
+    "balance",
+    "general",
+    "failure"
+  ],
+  "branches": [],
+  "rag_sources": [
+    "local-hr-handbook"
+  ],
+  "edge_cases": [
+    "missing_knowledge"
+  ],
+  "failure_types": [
+    "tool_failure",
+    "timeout",
+    "empty_retrieval"
+  ],
+  "tools": [
+    {
+      "name": "balance_lookup",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "employee_id"
+        ],
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "simulate_error": {
+            "type": "boolean"
+          }
+        }
+      },
+      "mock_result": {
+        "days": 12
+      }
+    }
+  ],
+  "knowledge": [
+    {
+      "id": "leave-policy",
+      "content": "연차는 최소 3일 전에 HR 포털에서 신청해야 합니다. 관리자 승인 문서를 첨부해 주세요.",
+      "question": "연차 신청 기간과 방법, 필요한 서류를 알려주세요.",
+      "reference_answer": "연차는 최소 3일 전에 HR 포털에서 신청해야 합니다. 관리자 승인 문서를 첨부해 주세요."
+    },
+    {
+      "id": "leave-carryover",
+      "content": "사용하지 않은 연차는 최대 5일까지 이월되며, 3월 31일까지 사용할 수 있습니다.",
+      "question": "사용하지 않은 연차는 며칠까지 이월되며 언제까지 사용할 수 있나요?",
+      "reference_answer": "사용하지 않은 연차는 최대 5일까지 이월되며, 3월 31일까지 사용할 수 있습니다."
+    }
+  ],
+  "probes": [
+    {
+      "id": "hr-policy",
+      "input": "연차 신청 기간과 방법, 필요한 서류를 알려주세요.",
+      "capability": "knowledge",
+      "evidence": "Owner가 정의한 intent→knowledge 평가 계약이며, leave-policy 문서를 근거로 합니다.",
+      "targets": {
+        "feature": [
+          "knowledge"
+        ],
+        "workflow": [
+          "intent",
+          "knowledge",
+          "final"
+        ],
+        "branch": [
+          "intent->knowledge"
+        ],
+        "rag": [
+          "leave-policy"
+        ]
+      },
+      "expected": {
+        "required_nodes": [
+          "knowledge",
+          "final"
+        ],
+        "document_ids": [
+          "leave-policy"
+        ]
+      }
+    },
+    {
+      "id": "hr-balance",
+      "input": "남은 연차를 조회해 주세요.",
+      "capability": "balance",
+      "evidence": "balance_lookup의 입력 Schema와 Mock 업무 계약을 검증합니다.",
+      "targets": {
+        "feature": [
+          "balance"
+        ],
+        "workflow": [
+          "intent",
+          "balance",
+          "final"
+        ],
+        "branch": [
+          "intent->balance"
+        ],
+        "tool": [
+          "balance_lookup"
+        ]
+      },
+      "expected": {
+        "tool_calls": [
+          {
+            "name": "balance_lookup",
+            "args": {
+              "employee_id": "demo"
+            }
+          }
+        ],
+        "valid_paths": [
+          [
+            "intent",
+            "balance",
+            "final"
+          ]
+        ],
+        "runtime_reference": "tool_output.balance_lookup.days"
+      }
+    },
+    {
+      "id": "hr-general",
+      "input": "안녕하세요",
+      "capability": "general",
+      "evidence": "일반 질문에 대한 명시적인 안내 응답 계약을 검증합니다.",
+      "targets": {
+        "feature": [
+          "general"
+        ],
+        "workflow": [
+          "intent",
+          "general",
+          "final"
+        ],
+        "branch": [
+          "intent->general"
+        ]
+      },
+      "expected": {
+        "reference_output": "연차 규정 안내와 남은 연차 조회를 도와드릴 수 있습니다.",
+        "required_nodes": [
+          "general"
+        ]
+      }
+    },
+    {
+      "id": "hr-error",
+      "input": "연차 조회 오류를 재현해 주세요.",
+      "capability": "failure",
+      "evidence": "Mock Tool에서 RuntimeError 발생 시 오류 안내와 재시도 안내를 검증합니다.",
+      "targets": {
+        "feature": [
+          "failure"
+        ],
+        "failure": [
+          "tool_failure"
+        ]
+      },
+      "expected": {
+        "expected_status": "error",
+        "required_output": [
+          "이용할 수 없습니다",
+          "다시 시도"
+        ]
+      }
+    },
+    {
+      "id": "hr-timeout",
+      "input": "연차 조회 시간 초과를 재현해 주세요.",
+      "capability": "failure",
+      "evidence": "40ms 지연으로 20ms 제한 시간을 초과하는 Timeout Simulation을 검증합니다.",
+      "targets": {
+        "feature": [
+          "failure"
+        ],
+        "failure": [
+          "timeout"
+        ]
+      },
+      "expected": {
+        "expected_status": "timeout",
+        "required_output": [
+          "이용할 수 없습니다"
+        ]
+      }
+    },
+    {
+      "id": "hr-empty",
+      "input": "미등록 지식 XYZ-404를 찾아주세요.",
+      "capability": "failure",
+      "evidence": "검색 결과가 없을 때 근거 없이 답변하지 않는지 검증합니다.",
+      "targets": {
+        "feature": [
+          "failure"
+        ],
+        "failure": [
+          "empty_retrieval"
+        ],
+        "edge": [
+          "missing_knowledge"
+        ]
+      },
+      "expected": {
+        "required_output": [
+          "근거 문서를 찾지 못했습니다"
+        ]
+      }
+    }
+  ]
+}

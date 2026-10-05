@@ -1,0 +1,207 @@
+{
+  "agent_id": "support-langflow",
+  "version": "1.1-ko",
+  "framework": "langflow",
+  "entry_point": "flow.json",
+  "workflow_id": "support-flow",
+  "output_nodes": [
+    "AnswerRag",
+    "AnswerTool",
+    "AnswerGeneral"
+  ],
+  "branches": [
+    "Router->Search",
+    "Router->Service",
+    "Router->Help"
+  ],
+  "capabilities": [
+    "knowledge",
+    "ticket",
+    "general",
+    "failure"
+  ],
+  "rag_sources": [
+    "support-handbook"
+  ],
+  "failure_types": [
+    "tool_failure",
+    "empty_retrieval"
+  ],
+  "edge_cases": [
+    "missing_support_doc"
+  ],
+  "tools": [
+    {
+      "name": "ticket_status",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "ticket_id"
+        ],
+        "properties": {
+          "ticket_id": {
+            "type": "string"
+          },
+          "simulate_error": {
+            "type": "boolean"
+          }
+        }
+      },
+      "mock_result": {
+        "state": "담당자 배정 완료"
+      }
+    }
+  ],
+  "knowledge": [
+    {
+      "id": "password-reset",
+      "content": "계정 포털에서 비밀번호를 재설정하세요. 이메일 인증 후 12자 이상의 비밀번호를 설정해야 합니다.",
+      "question": "비밀번호 재설정 방법과 비밀번호 조건을 알려주세요.",
+      "reference_answer": "계정 포털에서 비밀번호를 재설정하세요. 이메일 인증 후 12자 이상의 비밀번호를 설정해야 합니다."
+    }
+  ],
+  "probes": [
+    {
+      "id": "support-password",
+      "input": "비밀번호 재설정 방법과 비밀번호 조건을 알려주세요.",
+      "capability": "knowledge",
+      "evidence": "Flow JSON의 Router→Search 연결과 password-reset 문서를 근거로 합니다.",
+      "targets": {
+        "feature": [
+          "knowledge"
+        ],
+        "workflow": [
+          "TextInput",
+          "Router",
+          "Search",
+          "AnswerRag"
+        ],
+        "branch": [
+          "Router->Search"
+        ],
+        "rag": [
+          "password-reset"
+        ]
+      },
+      "expected": {
+        "required_nodes": [
+          "Search",
+          "AnswerRag"
+        ],
+        "document_ids": [
+          "password-reset"
+        ]
+      }
+    },
+    {
+      "id": "support-ticket",
+      "input": "지원 티켓 처리 상태를 조회해 주세요.",
+      "capability": "ticket",
+      "evidence": "Flow JSON의 Router→Service 연결과 ticket_status Schema를 검증합니다.",
+      "targets": {
+        "feature": [
+          "ticket"
+        ],
+        "workflow": [
+          "TextInput",
+          "Router",
+          "Service",
+          "AnswerTool"
+        ],
+        "branch": [
+          "Router->Service"
+        ],
+        "tool": [
+          "ticket_status"
+        ]
+      },
+      "expected": {
+        "tool_calls": [
+          {
+            "name": "ticket_status",
+            "args": {
+              "ticket_id": "T-100"
+            }
+          }
+        ],
+        "valid_paths": [
+          [
+            "TextInput",
+            "Router",
+            "Service",
+            "AnswerTool"
+          ]
+        ],
+        "runtime_reference": "tool_output.ticket_status.state"
+      }
+    },
+    {
+      "id": "support-help",
+      "input": "안녕하세요",
+      "capability": "general",
+      "evidence": "일반 질문에 대한 Router→Help 연결을 검증합니다.",
+      "targets": {
+        "feature": [
+          "general"
+        ],
+        "workflow": [
+          "TextInput",
+          "Router",
+          "Help",
+          "AnswerGeneral"
+        ],
+        "branch": [
+          "Router->Help"
+        ]
+      },
+      "expected": {
+        "reference_output": "비밀번호 재설정과 지원 티켓 조회를 도와드릴 수 있습니다.",
+        "required_nodes": [
+          "Help"
+        ]
+      }
+    },
+    {
+      "id": "support-error",
+      "input": "지원 티켓 조회 오류를 재현해 주세요.",
+      "capability": "failure",
+      "evidence": "지원 티켓 Mock Tool의 예외 처리와 오류 안내를 검증합니다.",
+      "targets": {
+        "feature": [
+          "failure"
+        ],
+        "failure": [
+          "tool_failure"
+        ]
+      },
+      "expected": {
+        "expected_status": "error",
+        "required_output": [
+          "이용할 수 없습니다"
+        ]
+      }
+    },
+    {
+      "id": "support-missing",
+      "input": "미등록 지식 XYZ-404를 찾아주세요.",
+      "capability": "failure",
+      "evidence": "지원 문서 검색 결과가 없을 때의 응답 계약을 검증합니다.",
+      "targets": {
+        "feature": [
+          "failure"
+        ],
+        "failure": [
+          "empty_retrieval"
+        ],
+        "edge": [
+          "missing_support_doc"
+        ]
+      },
+      "expected": {
+        "required_output": [
+          "지원 문서를 찾지 못했습니다"
+        ]
+      }
+    }
+  ]
+}

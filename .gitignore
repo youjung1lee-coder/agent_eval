@@ -1,0 +1,13 @@
+.venv/
+.phoenix-venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+.env.*
+!.env.example
+data/
+artifacts/
+*.log
+.cache/
+node_modules/

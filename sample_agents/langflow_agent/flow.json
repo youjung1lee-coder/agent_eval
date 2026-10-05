@@ -1,0 +1,889 @@
+{
+  "data": {
+    "nodes": [
+      {
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from lfx.base.io.text import TextComponent\nfrom lfx.io import MultilineInput, Output\nfrom lfx.schema.message import Message\n\n\nclass TextInputComponent(TextComponent):\n    display_name = \"Text Input\"\n    description = \"Get user text inputs.\"\n    documentation: str = \"https://docs.langflow.org/text-input-and-output\"\n    icon = \"type\"\n    name = \"TextInput\"\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            info=\"Text to be passed as input.\",\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Output Text\", name=\"text\", method=\"text_response\"),\n    ]\n\n    def text_response(self) -> Message:\n        return Message(\n            text=self.input_value,\n        )\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "multiline": true,
+                "ai_enabled": false,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "override_skip": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "",
+                "display_name": "Text",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Text to be passed as input.",
+                "title_case": false,
+                "track_in_telemetry": false,
+                "copy_field": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              }
+            },
+            "description": "Get user text inputs.",
+            "icon": "type",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Text Input",
+            "documentation": "https://docs.langflow.org/text-input-and-output",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "text",
+                "display_name": "Output Text",
+                "method": "text_response",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "TextInput",
+          "id": "TextInput"
+        },
+        "id": "TextInput"
+      },
+      {
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from lfx.custom.custom_component.component import Component\nfrom lfx.io import MessageTextInput, DataInput, Output\nfrom lfx.schema import Data\n\nclass SupportRouter(Component):\n    display_name = \"Support Intent\"\n    name = \"SupportRouter\"\n    inputs = [MessageTextInput(name=\"question\", required=True)]\n    outputs = [Output(name=\"rag\", method=\"rag\", group_outputs=True),\n               Output(name=\"tool\", method=\"tool\", group_outputs=True),\n               Output(name=\"general\", method=\"general\", group_outputs=True)]\n\n    def routed(self, requested: str) -> Data:\n        question = self.question.lower()\n        route = \"tool\" if any(t in question for t in (\"ticket\", \"티켓\")) else \"rag\" if any(t in question for t in (\"password\", \"knowledge\", \"비밀번호\", \"지식\")) else \"general\"\n        for other in (\"rag\", \"tool\", \"general\"):\n            if other != route:\n                self.stop(other)\n                self.graph.exclude_branch_conditionally(self._id, output_name=other)\n        return Data(data={\"input\": self.question, \"route\": route, \"status\": \"ok\", \"workflow_path\": [\"TextInput\", \"Router\"]})\n\n    def rag(self) -> Data:\n        return self.routed(\"rag\")\n\n    def tool(self) -> Data:\n        return self.routed(\"tool\")\n\n    def general(self) -> Data:\n        return self.routed(\"general\")\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "question": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "override_skip": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "question",
+                "value": "",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "track_in_telemetry": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Support Intent",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "rag",
+                "display_name": "rag",
+                "method": "rag",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": true,
+                "tool_mode": true
+              },
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "tool",
+                "display_name": "tool",
+                "method": "tool",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": true,
+                "tool_mode": true
+              },
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "general",
+                "display_name": "general",
+                "method": "general",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": true,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "SupportRouter",
+          "id": "Router"
+        },
+        "id": "Router"
+      },
+      {
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "state": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "override_skip": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "state",
+                "value": "",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "track_in_telemetry": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from lfx.custom.custom_component.component import Component\nfrom lfx.io import MessageTextInput, DataInput, Output\nfrom lfx.schema import Data\n\nclass SupportSearch(Component):\n    display_name = \"Support Knowledge\"\n    name = \"SupportSearch\"\n    inputs = [DataInput(name=\"state\", required=True)]\n    outputs = [Output(name=\"result\", method=\"search\")]\n\n    def search(self) -> Data:\n        from evaluation_platform.connectors.runtime import active_context\n        ctx = active_context.get()\n        state = dict(self.state.data)\n        documents = ctx.retrieve(state[\"input\"])\n        state.update(documents=documents, retrieval_attempted=True,\n                     output=documents[0][\"content\"] if documents else \"지원 문서를 찾지 못했습니다. 확인된 문서를 기준으로 질문해 주세요.\",\n                     workflow_path=state[\"workflow_path\"] + [\"Search\"], branches=[\"Router->Search\"])\n        return Data(data=state)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              }
+            },
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Support Knowledge",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "result",
+                "display_name": "result",
+                "method": "search",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "SupportSearch",
+          "id": "Search"
+        },
+        "id": "Search"
+      },
+      {
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "state": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "override_skip": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "state",
+                "value": "",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "track_in_telemetry": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from lfx.custom.custom_component.component import Component\nfrom lfx.io import MessageTextInput, DataInput, Output\nfrom lfx.schema import Data\n\nclass SupportService(Component):\n    display_name = \"Ticket Service\"\n    name = \"SupportService\"\n    inputs = [DataInput(name=\"state\", required=True)]\n    outputs = [Output(name=\"result\", method=\"call_service\")]\n\n    def call_service(self) -> Data:\n        from evaluation_platform.connectors.runtime import active_context\n        ctx = active_context.get()\n        state = dict(self.state.data)\n        args = {\"ticket_id\": \"T-100\"}\n        if \"error\" in state[\"input\"] or \"오류\" in state[\"input\"]:\n            args[\"simulate_error\"] = True\n        try:\n            result = ctx.tool(\"ticket_status\", args)\n            state.update(tool_calls=[{\"name\": \"ticket_status\", \"args\": args, \"result\": result, \"status\": \"ok\"}],\n                         output=\"지원 티켓 처리 상태: \" + result[\"state\"])\n        except Exception as exc:\n            state.update(status=\"error\", error=str(exc), output=\"현재 지원 티켓 조회 서비스를 이용할 수 없습니다.\",\n                         tool_calls=[{\"name\": \"ticket_status\", \"args\": args, \"status\": \"error\", \"error\": str(exc)}])\n        state.update(workflow_path=state[\"workflow_path\"] + [\"Service\"], branches=[\"Router->Service\"])\n        return Data(data=state)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              }
+            },
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Ticket Service",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "result",
+                "display_name": "result",
+                "method": "call_service",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "SupportService",
+          "id": "Service"
+        },
+        "id": "Service"
+      },
+      {
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "state": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "override_skip": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "state",
+                "value": "",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "track_in_telemetry": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from lfx.custom.custom_component.component import Component\nfrom lfx.io import MessageTextInput, DataInput, Output\nfrom lfx.schema import Data\n\nclass SupportGeneral(Component):\n    display_name = \"Support Help\"\n    name = \"SupportGeneral\"\n    inputs = [DataInput(name=\"state\", required=True)]\n    outputs = [Output(name=\"result\", method=\"help\")]\n\n    def help(self) -> Data:\n        state = dict(self.state.data)\n        state.update(output=\"비밀번호 재설정과 지원 티켓 조회를 도와드릴 수 있습니다.\",\n                     workflow_path=state[\"workflow_path\"] + [\"Help\"], branches=[\"Router->Help\"])\n        return Data(data=state)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              }
+            },
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Support Help",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "result",
+                "display_name": "result",
+                "method": "help",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "SupportGeneral",
+          "id": "Help"
+        },
+        "id": "Help"
+      },
+      {
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "state": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "override_skip": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "state",
+                "value": "",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "track_in_telemetry": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from lfx.custom.custom_component.component import Component\nfrom lfx.io import MessageTextInput, DataInput, Output\nfrom lfx.schema import Data\n\nclass SupportFinish(Component):\n    display_name = \"Support Answer\"\n    name = \"SupportFinish\"\n    inputs = [DataInput(name=\"state\", required=True)]\n    outputs = [Output(name=\"result\", method=\"finish\")]\n\n    def finish(self) -> Data:\n        state = dict(self.state.data)\n        state[\"workflow_path\"] = state[\"workflow_path\"] + [self._id]\n        return Data(data=state)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              }
+            },
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Support Answer",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "result",
+                "display_name": "result",
+                "method": "finish",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "SupportFinish",
+          "id": "AnswerRag"
+        },
+        "id": "AnswerRag"
+      },
+      {
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "state": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "override_skip": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "state",
+                "value": "",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "track_in_telemetry": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from lfx.custom.custom_component.component import Component\nfrom lfx.io import MessageTextInput, DataInput, Output\nfrom lfx.schema import Data\n\nclass SupportFinish(Component):\n    display_name = \"Support Answer\"\n    name = \"SupportFinish\"\n    inputs = [DataInput(name=\"state\", required=True)]\n    outputs = [Output(name=\"result\", method=\"finish\")]\n\n    def finish(self) -> Data:\n        state = dict(self.state.data)\n        state[\"workflow_path\"] = state[\"workflow_path\"] + [self._id]\n        return Data(data=state)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              }
+            },
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Support Answer",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "result",
+                "display_name": "result",
+                "method": "finish",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "SupportFinish",
+          "id": "AnswerTool"
+        },
+        "id": "AnswerTool"
+      },
+      {
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "state": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "override_skip": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "state",
+                "value": "",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "track_in_telemetry": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from lfx.custom.custom_component.component import Component\nfrom lfx.io import MessageTextInput, DataInput, Output\nfrom lfx.schema import Data\n\nclass SupportFinish(Component):\n    display_name = \"Support Answer\"\n    name = \"SupportFinish\"\n    inputs = [DataInput(name=\"state\", required=True)]\n    outputs = [Output(name=\"result\", method=\"finish\")]\n\n    def finish(self) -> Data:\n        state = dict(self.state.data)\n        state[\"workflow_path\"] = state[\"workflow_path\"] + [self._id]\n        return Data(data=state)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              }
+            },
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Support Answer",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "result",
+                "display_name": "result",
+                "method": "finish",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "group_outputs": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "SupportFinish",
+          "id": "AnswerGeneral"
+        },
+        "id": "AnswerGeneral"
+      }
+    ],
+    "edges": [
+      {
+        "source": "TextInput",
+        "target": "Router",
+        "data": {
+          "sourceHandle": {
+            "dataType": "TextInput",
+            "id": "TextInput",
+            "name": "text",
+            "output_types": [
+              "Message"
+            ]
+          },
+          "targetHandle": {
+            "fieldName": "question",
+            "id": "Router",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "FieldTypes.TEXT"
+          }
+        }
+      },
+      {
+        "source": "Router",
+        "target": "Search",
+        "data": {
+          "sourceHandle": {
+            "dataType": "SupportRouter",
+            "id": "Router",
+            "name": "rag",
+            "output_types": [
+              "Data"
+            ]
+          },
+          "targetHandle": {
+            "fieldName": "state",
+            "id": "Search",
+            "inputTypes": [
+              "Data"
+            ],
+            "type": "FieldTypes.OTHER"
+          }
+        }
+      },
+      {
+        "source": "Search",
+        "target": "AnswerRag",
+        "data": {
+          "sourceHandle": {
+            "dataType": "SupportSearch",
+            "id": "Search",
+            "name": "result",
+            "output_types": [
+              "Data"
+            ]
+          },
+          "targetHandle": {
+            "fieldName": "state",
+            "id": "AnswerRag",
+            "inputTypes": [
+              "Data"
+            ],
+            "type": "FieldTypes.OTHER"
+          }
+        }
+      },
+      {
+        "source": "Router",
+        "target": "Service",
+        "data": {
+          "sourceHandle": {
+            "dataType": "SupportRouter",
+            "id": "Router",
+            "name": "tool",
+            "output_types": [
+              "Data"
+            ]
+          },
+          "targetHandle": {
+            "fieldName": "state",
+            "id": "Service",
+            "inputTypes": [
+              "Data"
+            ],
+            "type": "FieldTypes.OTHER"
+          }
+        }
+      },
+      {
+        "source": "Service",
+        "target": "AnswerTool",
+        "data": {
+          "sourceHandle": {
+            "dataType": "SupportService",
+            "id": "Service",
+            "name": "result",
+            "output_types": [
+              "Data"
+            ]
+          },
+          "targetHandle": {
+            "fieldName": "state",
+            "id": "AnswerTool",
+            "inputTypes": [
+              "Data"
+            ],
+            "type": "FieldTypes.OTHER"
+          }
+        }
+      },
+      {
+        "source": "Router",
+        "target": "Help",
+        "data": {
+          "sourceHandle": {
+            "dataType": "SupportRouter",
+            "id": "Router",
+            "name": "general",
+            "output_types": [
+              "Data"
+            ]
+          },
+          "targetHandle": {
+            "fieldName": "state",
+            "id": "Help",
+            "inputTypes": [
+              "Data"
+            ],
+            "type": "FieldTypes.OTHER"
+          }
+        }
+      },
+      {
+        "source": "Help",
+        "target": "AnswerGeneral",
+        "data": {
+          "sourceHandle": {
+            "dataType": "SupportGeneral",
+            "id": "Help",
+            "name": "result",
+            "output_types": [
+              "Data"
+            ]
+          },
+          "targetHandle": {
+            "fieldName": "state",
+            "id": "AnswerGeneral",
+            "inputTypes": [
+              "Data"
+            ],
+            "type": "FieldTypes.OTHER"
+          }
+        }
+      }
+    ]
+  },
+  "is_component": false,
+  "name": "Support Agent",
+  "endpoint_name": "None"
+}
