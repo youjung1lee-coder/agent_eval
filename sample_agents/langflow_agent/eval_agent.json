@@ -1,0 +1,207 @@
+{
+  "agent_id": "support-langflow",
+  "version": "1.0",
+  "framework": "langflow",
+  "entry_point": "flow.json",
+  "workflow_id": "support-flow",
+  "output_nodes": [
+    "AnswerRag",
+    "AnswerTool",
+    "AnswerGeneral"
+  ],
+  "branches": [
+    "Router->Search",
+    "Router->Service",
+    "Router->Help"
+  ],
+  "capabilities": [
+    "knowledge",
+    "ticket",
+    "general",
+    "failure"
+  ],
+  "rag_sources": [
+    "support-handbook"
+  ],
+  "failure_types": [
+    "tool_failure",
+    "empty_retrieval"
+  ],
+  "edge_cases": [
+    "missing_support_doc"
+  ],
+  "tools": [
+    {
+      "name": "ticket_status",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "ticket_id"
+        ],
+        "properties": {
+          "ticket_id": {
+            "type": "string"
+          },
+          "simulate_error": {
+            "type": "boolean"
+          }
+        }
+      },
+      "mock_result": {
+        "state": "assigned"
+      }
+    }
+  ],
+  "knowledge": [
+    {
+      "id": "password-reset",
+      "content": "Reset your password using the account portal. Verify your email and choose a password with at least 12 characters.",
+      "question": "How can I reset my password?",
+      "reference_answer": "Reset your password using the account portal. Verify your email and choose a password with at least 12 characters."
+    }
+  ],
+  "probes": [
+    {
+      "id": "support-password",
+      "input": "How can I reset my password?",
+      "capability": "knowledge",
+      "evidence": "Exported Router rag output connected to Search; password-reset document",
+      "targets": {
+        "feature": [
+          "knowledge"
+        ],
+        "workflow": [
+          "TextInput",
+          "Router",
+          "Search",
+          "AnswerRag"
+        ],
+        "branch": [
+          "Router->Search"
+        ],
+        "rag": [
+          "password-reset"
+        ]
+      },
+      "expected": {
+        "required_nodes": [
+          "Search",
+          "AnswerRag"
+        ],
+        "document_ids": [
+          "password-reset"
+        ]
+      }
+    },
+    {
+      "id": "support-ticket",
+      "input": "Check my ticket",
+      "capability": "ticket",
+      "evidence": "Exported Router tool output connected to Service; ticket_status schema",
+      "targets": {
+        "feature": [
+          "ticket"
+        ],
+        "workflow": [
+          "TextInput",
+          "Router",
+          "Service",
+          "AnswerTool"
+        ],
+        "branch": [
+          "Router->Service"
+        ],
+        "tool": [
+          "ticket_status"
+        ]
+      },
+      "expected": {
+        "tool_calls": [
+          {
+            "name": "ticket_status",
+            "args": {
+              "ticket_id": "T-100"
+            }
+          }
+        ],
+        "valid_paths": [
+          [
+            "TextInput",
+            "Router",
+            "Service",
+            "AnswerTool"
+          ]
+        ],
+        "runtime_reference": "tool_output.ticket_status.state"
+      }
+    },
+    {
+      "id": "support-help",
+      "input": "Hello",
+      "capability": "general",
+      "evidence": "Router general output connected to Help",
+      "targets": {
+        "feature": [
+          "general"
+        ],
+        "workflow": [
+          "TextInput",
+          "Router",
+          "Help",
+          "AnswerGeneral"
+        ],
+        "branch": [
+          "Router->Help"
+        ]
+      },
+      "expected": {
+        "reference_output": "I can help with password reset and support tickets.",
+        "required_nodes": [
+          "Help"
+        ]
+      }
+    },
+    {
+      "id": "support-error",
+      "input": "ticket error",
+      "capability": "failure",
+      "evidence": "Mock support tool exception",
+      "targets": {
+        "feature": [
+          "failure"
+        ],
+        "failure": [
+          "tool_failure"
+        ]
+      },
+      "expected": {
+        "expected_status": "error",
+        "required_output": [
+          "unavailable"
+        ]
+      }
+    },
+    {
+      "id": "support-missing",
+      "input": "knowledge missing",
+      "capability": "failure",
+      "evidence": "No knowledge match; support abstention contract",
+      "targets": {
+        "feature": [
+          "failure"
+        ],
+        "failure": [
+          "empty_retrieval"
+        ],
+        "edge": [
+          "missing_support_doc"
+        ]
+      },
+      "expected": {
+        "required_output": [
+          "No support document"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "agent_id": "commerce-third", "version": "1.0", "framework": "langgraph", "entry_point": "workflow.py:build_graph", "workflow_id": "order-operations",
+  "capabilities": ["shipment", "returns", "permission"], "rag_sources": ["merchant-policies"], "edge_cases": ["unauthorized_order"], "failure_types": [],
+  "tools": [{"name": "shipment_tracking", "input_schema": {"type": "object", "required": ["order_id"], "properties": {"order_id": {"type": "string"}}}, "mock_result": {"state": "in transit", "arrival": "Friday"}}],
+  "knowledge": [{"id": "merchant-return-30", "content": "Returns are accepted within 30 days with the purchase receipt. Opened perishable items are excluded.", "question": "When are returns accepted?", "reference_answer": "Returns are accepted within 30 days with the purchase receipt. Opened perishable items are excluded."}],
+  "probes": [
+    {"id": "order-shipment", "input": "Track my order", "capability": "shipment", "evidence": "Merchant owner contract for tracking with ORDER-42", "targets": {"feature": ["shipment"], "workflow": ["order_intake", "dispatch", "shipment", "receipt"], "branch": ["dispatch->shipment"], "tool": ["shipment_tracking"]}, "expected": {"tool_calls": [{"name": "shipment_tracking", "args": {"order_id": "ORDER-42"}}], "valid_paths": [["order_intake", "dispatch", "shipment", "receipt"]], "runtime_reference": "tool_output.shipment_tracking.state"}},
+    {"id": "order-return", "input": "When are returns accepted?", "capability": "returns", "evidence": "Merchant return document and returns branch", "targets": {"feature": ["returns"], "workflow": ["order_intake", "dispatch", "returns", "receipt"], "branch": ["dispatch->returns"], "rag": ["merchant-return-30"]}, "expected": {"required_nodes": ["returns"], "document_ids": ["merchant-return-30"]}},
+    {"id": "order-private", "input": "Track a private order", "capability": "permission", "evidence": "Mock ownership check denies private orders before any tool", "targets": {"feature": ["permission"], "workflow": ["order_intake", "dispatch", "blocked", "receipt"], "branch": ["dispatch->blocked"], "edge": ["unauthorized_order"]}, "expected": {"permission_denied": true, "forbidden_tools": ["shipment_tracking"], "required_nodes": ["blocked"], "required_output": ["Access denied"]}}
+  ]
+}
