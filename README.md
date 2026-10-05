@@ -8,6 +8,10 @@
 
 기준 문서 [에이전트_성능평가_v1.md](에이전트_성능평가_v1.md)를 보존했습니다. 구현 전 정리한 요구사항, 차이, 범위, 가정은 [docs/requirements.md](docs/requirements.md)를 참고하세요.
 
+[Sample 코드 → 평가 사례 → Evaluator 설명자료](docs/sample_evaluation_explained.html)는 두 Sample의 기본 14개 사례, 실제 코드 줄 번호, 평가 함수 배정 조건과 결과, UI 스냅샷 10개를 함께 보여주는 단일 HTML입니다. 파일을 다운로드해 브라우저로 열면 오프라인에서도 사례 전환·검색·이미지 확대를 사용할 수 있습니다.
+
+회사 PC에서 코드와 설명자료를 확인하려면 GitHub에서 `feat/gaia-evaluation-platform` 브랜치를 선택하세요. `Code → Download ZIP`으로 내려받아 압축을 풀고 `docs/sample_evaluation_explained.html`을 Chrome 또는 Edge로 여세요. 설명자료 열람에는 Python 설치나 서버 실행이 필요하지 않습니다. GitHub 파일 화면은 HTML을 웹페이지로 실행하지 않으므로 다운로드한 파일을 여는 방법을 권장합니다. 비공개 저장소는 접근 권한이 있는 GitHub 계정으로 로그인해야 합니다.
+
 ## Architecture
 
 ```text
